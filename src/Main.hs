@@ -44,9 +44,6 @@ options = [
   Option ['D'] ["def-part"] (ReqArg (\ w o -> o {oDef = Just w}) "WORD") "",
   Option ['a'] ["all results"] (NoArg (\ o -> o {oAll = True})) ""]
 
-initM :: [a] -> [a]
-initM l = if null l then [] else init l
-
 procDict :: [String] -> [Entry]
 procDict [] = []
 procDict ("":rest) = procDict rest
@@ -54,10 +51,11 @@ procDict (w:rest) = if "00-" `isPrefixOf` w
   then procDict $ dropWhile ("  " `isPrefixOf`) rest
   else let
     (wordSp, meta) = break (== '[') w
+    word = if null meta then wordSp else init wordSp
     (ipa, partPre) = break (== ']') meta
     (d, rest') = first (concatMap (drop 2)) $ span ("  " `isPrefixOf`) rest
     e = Entry {
-      eWord = initM wordSp,
+      eWord = word,
       eDef = d,
       eIpa = ipa,
       ePart = drop 1 partPre
