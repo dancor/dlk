@@ -36,12 +36,12 @@ defaultOptions = Options {
 
 options :: [OptDescr (Options -> Options)]
 options = [
-  Option ['w'] ["full-word"]
+  Option ['w'] ["word"]
     (ReqArg (\ w o -> o {oFWord = Just w}) "WORD") "",
-  Option ['d'] ["def-full-word"]
+  Option ['d'] ["def-word"]
     (ReqArg (\ w o -> o {oFDef = Just w}) "WORD") "",
-  Option ['W'] ["word-part"] (ReqArg (\ w o -> o {oWord = Just w}) "WORD") "",
-  Option ['D'] ["def-part"] (ReqArg (\ w o -> o {oDef = Just w}) "WORD") "",
+  Option ['W'] ["word-part"] (ReqArg (\ w o -> o {oWord = Just w}) "PART") "",
+  Option ['D'] ["def-part"] (ReqArg (\ w o -> o {oDef = Just w}) "PART") "",
   Option ['a'] ["all results"] (NoArg (\ o -> o {oAll = True})) ""]
 
 procDict :: [String] -> [Entry]
@@ -89,12 +89,17 @@ showDef (Entry word def _ipa part) =
 
 main :: IO ()
 main = do
-  let usageHeader = "usage: deu [options] [lang]"
+  let usageHeader = "usage: dlk <lang> [options] [word]"
   args <- getArgs
-  let 
-    (lang, opts) = case getOpt Permute options args of
-      (o, [lang], []) -> (lang, foldl (flip id) defaultOptions o)
-      (_, _, errs) -> error (concat errs ++ usageInfo usageHeader options)
+  let
+    doErr = error . (++ usageInfo usageHeader options)
+    (moreArgs, optsPre) = case getOpt Permute options args of
+      (o, n, []) -> (n, foldl (flip id) defaultOptions o)
+      (_, _, errs) -> doErr $ concat errs
+    (lang, opts) = case moreArgs of
+      [lang] -> (lang, optsPre)
+      [lang, wd] -> (lang, optsPre {oFWord = Just wd})
+      _ -> doErr ""
     stdLoc s = "/usr/share/dictd/freedict-" ++ s ++ ".dict"
     langExp l = case l of
       'e' -> "eng"
