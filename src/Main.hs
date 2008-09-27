@@ -17,14 +17,16 @@ data Entry = Entry {
   eWord :: String,
   eDef :: String,
   eIpa :: String,
-  ePart :: String} deriving Show
+  ePart :: String
+  } deriving Show
 
 data Options = Options {
   oWord :: Maybe String,
   oDef :: Maybe String,
   oFWord :: Maybe String,
   oFDef :: Maybe String,
-  oAll :: Bool} deriving Show
+  oAll :: Bool
+  } deriving Show
 
 defaultOptions :: Options
 defaultOptions = Options {
@@ -32,7 +34,8 @@ defaultOptions = Options {
   oDef = Nothing,
   oFWord = Nothing,
   oFDef = Nothing,
-  oAll = False}
+  oAll = False
+  }
 
 options :: [OptDescr (Options -> Options)]
 options = [
@@ -42,7 +45,8 @@ options = [
     (ReqArg (\ w o -> o {oFDef = Just w}) "WORD") "",
   Option ['W'] ["word-part"] (ReqArg (\ w o -> o {oWord = Just w}) "PART") "",
   Option ['D'] ["def-part"] (ReqArg (\ w o -> o {oDef = Just w}) "PART") "",
-  Option ['a'] ["all results"] (NoArg (\ o -> o {oAll = True})) ""]
+  Option ['a'] ["all results"] (NoArg (\ o -> o {oAll = True})) ""
+  ]
 
 procDict :: [String] -> [Entry]
 procDict [] = []
@@ -108,8 +112,9 @@ main = do
       'h' -> "hin"
       'j' -> "jpn"
       'l' -> "lat"
-      'r' -> "rus"
+      'o' -> "epo"
       'p' -> "por"
+      'r' -> "rus"
       's' -> "spa"
       _ -> error "unknown lang"
     langF l = case l of
