@@ -25,6 +25,8 @@ data Options = Options {
   oDef :: Maybe String,
   oFWord :: Maybe String,
   oFDef :: Maybe String,
+  oExactWord :: Maybe String,
+  oExactDef :: Maybe String,
   oAll :: Bool
   } deriving Show
 
@@ -34,6 +36,8 @@ defaultOptions = Options {
   oDef = Nothing,
   oFWord = Nothing,
   oFDef = Nothing,
+  oExactWord = Nothing,
+  oExactDef = Nothing,
   oAll = False
   }
 
@@ -45,6 +49,10 @@ options = [
     (ReqArg (\ w o -> o {oFDef = Just w}) "WORD") "",
   Option ['W'] ["word-part"] (ReqArg (\ w o -> o {oWord = Just w}) "PART") "",
   Option ['D'] ["def-part"] (ReqArg (\ w o -> o {oDef = Just w}) "PART") "",
+  Option ['e'] ["word-exact"] 
+    (ReqArg (\ w o -> o {oExactWord = Just w}) "WORD") "",
+  Option ['E'] ["def-exact"]
+    (ReqArg (\ w o -> o {oExactDef = Just w}) "DEF") "",
   Option ['a'] ["all results"] (NoArg (\ o -> o {oAll = True})) ""
   ]
 
@@ -76,13 +84,16 @@ lM x = case x of
   Just xx -> Just (map toLower xx)
   Nothing -> Nothing
 
-partOk :: Maybe String -> Maybe String -> String -> Bool
-partOk subXMb fSubXMb x = justOrTrue2 isInfixOf (lM subXMb) (map toLower x)
-  && justOrTrue2 (\ x y -> elem x $ words y) (lM fSubXMb) (map toLower x)
+partOk :: Maybe [Char] -> Maybe [Char] -> Maybe [Char] -> [Char] -> Bool
+partOk subXMb fSubXMb fMatchXMb x = 
+  justOrTrue2 isInfixOf (lM subXMb) (map toLower x)
+  && justOrTrue2 ((. words) . elem) (lM fSubXMb) (map toLower x)
+  && justOrTrue2 (==) (lM fMatchXMb) (map toLower x)
 
 lineOk :: Options -> Entry -> Bool
-lineOk o e = 
-  partOk (oWord o) (oFWord o) (eWord e) && partOk (oDef o) (oFDef o) (eDef e)
+lineOk o e =
+  partOk (oWord o) (oFWord o) (oExactWord o) (eWord e) && 
+  partOk (oDef o) (oFDef o) (oExactDef o) (eDef e)
 
 filterRes :: Options -> [Entry] -> [Entry]
 filterRes opts = (if oAll opts then id else take 20) . filter (lineOk opts)
