@@ -1,0 +1,4 @@
+#!/bin/sh
+sudo cp freedict-epo-eng.dict /usr/share/dictd
+cd /usr/share/dictd
+sudo sh -c 'for f in *.dz; do cat $f | gunzip > ${f/.dz/}; done'
