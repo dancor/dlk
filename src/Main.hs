@@ -1,8 +1,5 @@
 module Main where
 
--- to gen .dict files:
--- ~ sudo sh -c 'for f in *.dz; do cat $f | gunzip > ${f/.dz/}; done'
-
 import Control.Arrow
 import Control.Monad
 import Data.Char
@@ -49,7 +46,7 @@ options = [
     (ReqArg (\ w o -> o {oFDef = Just w}) "WORD") "",
   Option ['W'] ["word-part"] (ReqArg (\ w o -> o {oWord = Just w}) "PART") "",
   Option ['D'] ["def-part"] (ReqArg (\ w o -> o {oDef = Just w}) "PART") "",
-  Option ['e'] ["word-exact"] 
+  Option ['e'] ["word-exact"]
     (ReqArg (\ w o -> o {oExactWord = Just w}) "WORD") "",
   Option ['E'] ["def-exact"]
     (ReqArg (\ w o -> o {oExactDef = Just w}) "DEF") "",
@@ -85,14 +82,14 @@ lM x = case x of
   Nothing -> Nothing
 
 partOk :: Maybe [Char] -> Maybe [Char] -> Maybe [Char] -> [Char] -> Bool
-partOk subXMb fSubXMb fMatchXMb x = 
+partOk subXMb fSubXMb fMatchXMb x =
   justOrTrue2 isInfixOf (lM subXMb) (map toLower x)
   && justOrTrue2 ((. words) . elem) (lM fSubXMb) (map toLower x)
   && justOrTrue2 (==) (lM fMatchXMb) (map toLower x)
 
 lineOk :: Options -> Entry -> Bool
 lineOk o e =
-  partOk (oWord o) (oFWord o) (oExactWord o) (eWord e) && 
+  partOk (oWord o) (oFWord o) (oExactWord o) (eWord e) &&
   partOk (oDef o) (oFDef o) (oExactDef o) (eDef e)
 
 filterRes :: Options -> [Entry] -> [Entry]
@@ -102,12 +99,31 @@ showDef :: Entry -> [Char]
 showDef (Entry word def _ipa part) =
   word ++ " " ++ part ++ ":\n  " ++ def ++ "\n"
 
+langAbbrs :: [(Char, String)]
+langAbbrs = [
+  ('d', "deu"),
+  ('e', "eng"),
+  ('f', "fra"),
+  ('h', "hin"),
+  ('j', "jpn"),
+  ('l', "lat"),
+  ('o', "epo"),
+  ('p', "por"),
+  ('r', "rus"),
+  ('s', "spa")
+  ]
+
 main :: IO ()
 main = do
-  let usageHeader = "usage: dlk <lang> [options] [word]"
+  let
+    usageHeader = "usage: dlk <lang> [options] [word]"
+    langFooter = intercalate "\n" $
+      ["lang options:"] ++
+      map (\ (l, lang) -> "  " ++ [l] ++ " -> " ++ lang) langAbbrs
+
   args <- getArgs
   let
-    doErr = error . (++ usageInfo usageHeader options)
+    doErr = error . (++ langFooter) . (++ usageInfo usageHeader options)
     (moreArgs, optsPre) = case getOpt Permute options args of
       (o, n, []) -> (n, foldl (flip id) defaultOptions o)
       (_, _, errs) -> doErr $ concat errs
@@ -116,18 +132,9 @@ main = do
       [lang, wd] -> (lang, optsPre {oFWord = Just wd})
       _ -> doErr ""
     stdLoc s = "/usr/share/dictd/freedict-" ++ s ++ ".dict"
-    langExp l = case l of
-      'e' -> "eng"
-      'f' -> "fra"
-      'g' -> "deu"
-      'h' -> "hin"
-      'j' -> "jpn"
-      'l' -> "lat"
-      'o' -> "epo"
-      'p' -> "por"
-      'r' -> "rus"
-      's' -> "spa"
-      _ -> error "unknown lang"
+    langExp l = case lookup l langAbbrs of
+      Just lang -> lang
+      Nothing -> error "unknown lang"
     langF l = case l of
       l1:l2:[] -> stdLoc $ langExp l1 ++ "-" ++ langExp l2
       l1:[] -> langF (l1:"e")
