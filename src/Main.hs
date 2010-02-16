@@ -83,9 +83,11 @@ lM x = case x of
 
 partOk :: Maybe [Char] -> Maybe [Char] -> Maybe [Char] -> [Char] -> Bool
 partOk subXMb fSubXMb fMatchXMb x =
-  justOrTrue2 isInfixOf (lM subXMb) (map toLower x)
-  && justOrTrue2 ((. words) . elem) (lM fSubXMb) (map toLower x)
-  && justOrTrue2 (==) (lM fMatchXMb) (map toLower x)
+  justOrTrue2 isInfixOf (lM subXMb) (map toLower x) &&
+  justOrTrue2
+    (\ w l -> w `elem` (map (filter (\ c -> isAlpha c || c == '-')) $ words l))
+    (lM fSubXMb) (map toLower x) &&
+  justOrTrue2 (==) (lM fMatchXMb) (map toLower x)
 
 lineOk :: Options -> Entry -> Bool
 lineOk o e =
