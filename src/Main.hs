@@ -35,8 +35,7 @@ defaultOptions = Options {
   oFDef = Nothing,
   oExactWord = Nothing,
   oExactDef = Nothing,
-  oAll = False
-  }
+  oAll = False}
 
 options :: [OptDescr (Options -> Options)]
 options = [
@@ -50,44 +49,36 @@ options = [
     (ReqArg (\ w o -> o {oExactWord = Just w}) "WORD") "",
   Option ['E'] ["def-exact"]
     (ReqArg (\ w o -> o {oExactDef = Just w}) "DEF") "",
-  Option ['a'] ["all results"] (NoArg (\ o -> o {oAll = True})) ""
-  ]
+  Option ['a'] ["all results"] (NoArg (\ o -> o {oAll = True})) ""]
 
 procDict :: [String] -> [Entry]
 procDict [] = []
 procDict ("":rest) = procDict rest
 procDict (w:rest) = if "00-" `isPrefixOf` w
   then procDict $ dropWhile ("  " `isPrefixOf`) rest
-  else let
-    (wordSp, meta) = break (== '[') w
-    word = if null meta then wordSp else init wordSp
-    (ipa, partPre) = break (== ']') meta
-    (d, rest') = first (concatMap (drop 2)) $ span ("  " `isPrefixOf`) rest
-    e = Entry {
-      eWord = word,
-      eDef = d,
-      eIpa = ipa,
-      ePart = drop 1 partPre
-      }
-    in e:procDict rest'
+  else e : procDict rest'
+  where
+  (wordSp, meta) = break (== '[') w
+  word = if null meta then wordSp else init wordSp
+  (ipa, partPre) = break (== ']') meta
+  (d, rest') = first (concatMap (drop 2)) $ span ("  " `isPrefixOf`) rest
+  e = Entry {
+    eWord = word,
+    eDef = d,
+    eIpa = ipa,
+    ePart = drop 1 partPre}
 
-justOrTrue2 :: (a -> b -> Bool) -> (Maybe a) -> b -> Bool
-justOrTrue2 f xMb y = case xMb of
-  Nothing -> True
-  Just x -> f x y
-
-lM :: Maybe [Char] -> Maybe [Char]
-lM x = case x of
-  Just xx -> Just (map toLower xx)
-  Nothing -> Nothing
-
-partOk :: Maybe [Char] -> Maybe [Char] -> Maybe [Char] -> [Char] -> Bool
+partOk :: Maybe String -> Maybe String -> Maybe String -> String -> Bool
 partOk subXMb fSubXMb fMatchXMb x =
-  justOrTrue2 isInfixOf (lM subXMb) (map toLower x) &&
-  justOrTrue2
-    (\ w l -> w `elem` (map (filter (\ c -> isAlpha c || c == '-')) $ words l))
-    (lM fSubXMb) (map toLower x) &&
-  justOrTrue2 (==) (lM fMatchXMb) (map toLower x)
+  onLowJustOrTrue (flip isInfixOf) (lowerMb subXMb) &&
+  onLowJustOrTrue
+    (\ l w -> w `elem` (map (filter (\ c -> isAlpha c || c == '-')) $ words l))
+    (lowerMb fSubXMb) &&
+  onLowJustOrTrue (==) (lowerMb fMatchXMb)
+  where
+  onLowJustOrTrue :: (String -> a -> Bool) -> (Maybe a) -> Bool
+  onLowJustOrTrue f = maybe True (f $ map toLower x)
+  lowerMb = fmap (map toLower)
 
 lineOk :: Options -> Entry -> Bool
 lineOk o e =
@@ -97,7 +88,7 @@ lineOk o e =
 filterRes :: Options -> [Entry] -> [Entry]
 filterRes opts = (if oAll opts then id else take 20) . filter (lineOk opts)
 
-showDef :: Entry -> [Char]
+showDef :: Entry -> String
 showDef (Entry word def _ipa part) =
   word ++ " " ++ part ++ ":\n  " ++ def ++ "\n"
 
@@ -112,8 +103,7 @@ langAbbrs = [
   ('o', "epo"),
   ('p', "por"),
   ('r', "rus"),
-  ('s', "spa")
-  ]
+  ('s', "spa")]
 
 main :: IO ()
 main = do

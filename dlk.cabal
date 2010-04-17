@@ -5,7 +5,7 @@ license-file:   LICENSE
 author:         dan corson <danl@alum.mit.edu>
 synopsis:       dict-file lookup
 build-type:     Simple
-build-depends:  base
+build-depends:  base > 4
 
 executable:     dlk
 main-is:        Main.hs
