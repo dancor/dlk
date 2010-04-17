@@ -6,6 +6,7 @@ import Data.Char
 import Data.List
 import Data.List
 import Data.List
+import FUtil
 import System.Console.GetOpt
 import System.Environment
 import System.IO
@@ -78,7 +79,8 @@ partOk subXMb fSubXMb fMatchXMb x =
   where
   onLowJustOrTrue :: (String -> a -> Bool) -> (Maybe a) -> Bool
   onLowJustOrTrue f = maybe True (f $ map toLower x)
-  lowerMb = fmap (map toLower)
+  -- why are opts raw utf8 but file reads unicode?  ghc 6.12.1 is insane?
+  lowerMb = fmap (map toLower . fromUtf8)
 
 lineOk :: Options -> Entry -> Bool
 lineOk o e =
