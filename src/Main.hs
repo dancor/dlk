@@ -59,7 +59,7 @@ procDict (w:rest) = if "00-" `isPrefixOf` w
   else e : procDict rest'
   where
   (wordSp, meta) = break (== '[') w
-  word = if null meta then wordSp else init wordSp
+  word = if null meta || null wordSp then wordSp else init wordSp
   (ipa, partPre) = break (== ']') meta
   (d, rest') = first (concatMap (drop 2)) $ span ("  " `isPrefixOf`) rest
   e = Entry {
@@ -107,14 +107,12 @@ langAbbrs = [
 
 main :: IO ()
 main = do
+  args <- getArgs
   let
     usageHeader = "usage: dlk <lang> [options] [word]"
     langFooter = intercalate "\n" $
       ["lang options:"] ++
       map (\ (l, lang) -> "  " ++ [l] ++ " -> " ++ lang) langAbbrs
-
-  args <- getArgs
-  let
     doErr = error . (++ langFooter) . (++ usageInfo usageHeader options)
     (moreArgs, optsPre) = case getOpt Permute options args of
       (o, n, []) -> (n, foldl (flip id) defaultOptions o)
@@ -124,9 +122,7 @@ main = do
       [lang, wd] -> (lang, optsPre {oFWord = Just wd})
       _ -> doErr ""
     stdLoc s = "/usr/share/dictd/freedict-" ++ s ++ ".dict"
-    langExp l = case lookup l langAbbrs of
-      Just lang -> lang
-      Nothing -> error "unknown lang"
+    langExp l = maybe (error "unknown lang") id $ lookup l langAbbrs
     langF l = case l of
       l1:l2:[] -> stdLoc $ langExp l1 ++ "-" ++ langExp l2
       l1:[] -> langF (l1:"e")
